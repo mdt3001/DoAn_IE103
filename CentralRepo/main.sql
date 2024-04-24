@@ -207,5 +207,195 @@ INSERT INTO HOADON VALUES ('HD00002', 'NV00002', 'KH00002', '2021-02-02', 'VE000
 INSERT INTO HOADON VALUES ('HD00003', 'NV00003', 'KH00003', '2021-02-03', 'VE00003', 3, 3000000);
 INSERT INTO HOADON VALUES ('HD00004', 'NV00004', 'KH00004', '2021-02-04', 'VE00004', 4, 4000000);
 
+--Trigger kiểm tra nhân viên được thêm mới phải đảm bảo đủ 18 tuổi--
+GO
+CREATE TRIGGER TR_NHANVIEN_BeforeInsert
+ON NHANVIEN
+INSTEAD OF INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    DECLARE @CurrentDate DATE;
+    SET @CurrentDate = GETDATE();
+
+    IF (SELECT DATEDIFF(YEAR, (SELECT NGAYSINH FROM INSERTED), @CurrentDate)) < 18
+    BEGIN
+        RAISERROR('Nhân viên phải đủ 18 tuổi.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+    -- Tiếp tục với việc chèn dữ liệu vào bảng NHANVIEN nếu không có vấn đề
+    INSERT INTO NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, ID_TAIKHOAN)
+    SELECT MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, ID_TAIKHOAN
+    FROM INSERTED;
+END;
+
+--Trigger kiểm tra nhân viên được cập nhật phải đủ 18 tuổi--
+GO
+CREATE TRIGGER TR_NHANVIEN_BeforeUpdate
+ON NHANVIEN
+INSTEAD OF UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @CurrentDate DATE;
+    SET @CurrentDate = GETDATE();
+
+    IF (SELECT DATEDIFF(YEAR, (SELECT NGAYSINH FROM INSERTED), @CurrentDate)) < 18
+    BEGIN
+        RAISERROR('Nhân viên phải đủ 18 tuổi.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+
+    -- Tiếp tục với việc cập nhật dữ liệu trong bảng NHANVIEN nếu không có vấn đề
+    UPDATE NHANVIEN
+    SET TENNV = INSERTED.TENNV, DIACHI = INSERTED.DIACHI, SODT = INSERTED.SODT, 
+        NGAYSINH = INSERTED.NGAYSINH, NGAYVAOLAM = INSERTED.NGAYVAOLAM, 
+        GIOITINH = INSERTED.GIOITINH, EMAIL = INSERTED.EMAIL, 
+        PASSWORD = INSERTED.PASSWORD, NGAYTAOTK = INSERTED.NGAYTAOTK, 
+        ID_TAIKHOAN = INSERTED.ID_TAIKHOAN
+    FROM INSERTED
+    WHERE NHANVIEN.MANV = INSERTED.MANV;
+END;
+
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa NHANVIEN và TAIKHOAN
+GO
+CREATE TRIGGER TR_NHANVIEN_TAIKHOAN_AfterInsert
+ON NHANVIEN
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @count_tk INT;
+    SELECT @count_tk = COUNT(*) FROM TAIKHOAN WHERE ID_TAIKHOAN IN (SELECT ID_TAIKHOAN FROM INSERTED);
+
+    IF @count_tk < (SELECT COUNT(*) FROM INSERTED)
+    BEGIN
+        RAISERROR('Mỗi nhân viên phải có một tài khoản.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+END;
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa KHACHHANG và TAIKHOAN
+GO
+CREATE TRIGGER TR_KHACHHANG_TAIKHOAN_AfterInsert
+ON KHACHHANG
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @count_tk INT;
+    SELECT @count_tk = COUNT(*) FROM TAIKHOAN WHERE ID_TAIKHOAN IN (SELECT ID_TAIKHOAN FROM INSERTED);
+
+    IF @count_tk < (SELECT COUNT(*) FROM INSERTED)
+    BEGIN
+        RAISERROR('Mỗi khách hàng phải có một tài khoản.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+END;
+
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa VE và KHACHHANG
+GO
+CREATE TRIGGER TR_VE_KHACHHANG_InsteadOfInsert
+ON VE
+INSTEAD OF INSERT
+AS
+BEGIN
+    DECLARE @count_kh INT;
+    SELECT @count_kh = COUNT(*) FROM KHACHHANG WHERE MAKH IN (SELECT MAKH FROM INSERTED);
+    IF @count_kh = 0
+    BEGIN
+        RAISERROR('Mỗi vé phải thuộc sở hữu của một khách hàng.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+    ELSE
+    BEGIN
+        INSERT INTO VE (MAVE, MAHV, MACB, MAKH, GHE, GIAVE)
+        SELECT MAVE, MAHV, MACB, MAKH, GHE, GIAVE FROM INSERTED;
+    END;
+END;
+
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa HOADON và KHACHHANG
+GO
+CREATE TRIGGER TR_HOADON_KHACHHANG_BeforeInsert
+ON HOADON
+INSTEAD OF INSERT
+AS
+BEGIN
+    DECLARE @count_kh INT;
+    SELECT @count_kh = COUNT(*) FROM KHACHHANG WHERE MAKH IN (SELECT MAKH FROM INSERTED);
+    IF @count_kh = 0
+    BEGIN
+        RAISERROR('Mỗi hóa đơn phải thuộc sở hữu của một khách hàng.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+    ELSE
+    BEGIN
+        INSERT INTO HOADON (MAHD, MANV, MAKH, NGAYLAP, MAVE, SOVE, THANHTIEN)
+        SELECT MAHD, MANV, MAKH, NGAYLAP, MAVE, SOVE, THANHTIEN FROM INSERTED;
+    END;
+END;
+
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa VE và HOADON
+GO
+CREATE TRIGGER TR_VE_HOADON_Insert
+ON VE
+AFTER INSERT
+AS
+BEGIN
+    -- Kiểm tra mối quan hệ giữa VE và HOADON
+    DECLARE @count_hd INT;
+    SELECT @count_hd = COUNT(*) FROM HOADON WHERE MAVE IN (SELECT MAVE FROM inserted);
+    
+    -- Nếu mối quan hệ bị vi phạm, thông báo lỗi và quay lại giao dịch
+    IF @count_hd = 0
+    BEGIN
+        RAISERROR ('Mỗi vé phải thuộc sở hữu của một hóa đơn.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END;
+END;
+
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa VE và HANGVE
+GO
+CREATE TRIGGER Check_HangVe_For_Ve
+ON VE
+FOR INSERT, UPDATE
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM inserted i WHERE NOT EXISTS (SELECT 1 FROM HANGVE WHERE MAHV = i.MAHV))
+    BEGIN
+        RAISERROR ('Không tồn tại Hạng vé tương ứng', 16, 1)
+        ROLLBACK TRANSACTION
+    END
+END;
+
+
+-- Trigger để đảm bảo ràng buộc mối quan hệ giữa VE và CHUYENBAY
+GO
+CREATE TRIGGER Check_ChuyenBay_For_Ve
+ON VE
+FOR INSERT, UPDATE
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM inserted i WHERE NOT EXISTS (SELECT 1 FROM CHUYENBAY WHERE MACB = i.MACB))
+    BEGIN
+        RAISERROR ('Không tồn tại Chuyến bay tương ứng', 16, 1)
+        ROLLBACK TRANSACTION
+    END
+END;
 

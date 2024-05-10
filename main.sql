@@ -150,6 +150,7 @@ ADD CONSTRAINT CHK_SOGHEVIP CHECK (SOGHEVIP >= 0);
 ALTER TABLE TUYENBAY
 ADD CONSTRAINT CHK_MASBDI_MASBDEN CHECK (MASBDI <> MASBDEN);
 
+-- Thêm dữ liệu vào bảng SANBAY
 GO
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('FCM', 'Flying Cloud Airport', 'Minneapolis');
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('COF', 'Patrick Air Force Base', 'Cocoa Beach');
@@ -202,8 +203,8 @@ insert into SANBAY (MASB, TENSB, DIADIEM) values ('MGD', 'Magdalena Airport', 'M
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('SKQ', 'Sekakes Airport', 'Sekakes');
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('MBX', 'Maribor Airport', 'Maribor');
 
+-- Thêm dữ liệu vào bảng TUYENBAY
 GO
-
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('BBW-SUT', 'BBW', 'SUT');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('NLS-BOT', 'NLS', 'BOT');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('BBW-SQZ', 'BBW', 'SQZ');
@@ -405,6 +406,8 @@ insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('PPU-FRN', 'PPU', 'FRN');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('MGR-TUA', 'MGR', 'TUA');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('MBX-SUT', 'MBX', 'SUT');
 
+
+-- Thêm dữ liệu vào bảng MAYBAY
 GO
 
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('LPRHRT', 'Aerofox II', 'Firefly Jets', 121, 7);
@@ -609,17 +612,7 @@ insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values 
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('HZ2CCY', 'Aerowolf II', 'Skybound Aviation', 191, 9);
 GO
 
---TRIGGER THEM SO GHE THUONG + VIP CON LAI KHI THEM CHUYEN BAY
-CREATE TRIGGER TRG_SOGHECONLAI ON CHUYENBAY
-AFTER INSERT AS
-BEGIN
-    UPDATE CHUYENBAY
-    SET SOGHEHANGTHUONGCONLAI = M.SOGHETHUONG, SOGHEHANGVIPCONLAI = M.SOGHEVIP
-    FROM CHUYENBAY C
-    INNER JOIN inserted I ON C.MACB = I.MACB
-    INNER JOIN MAYBAY M ON C.MAMB = M.MAMB
-END
-
+-- Thêm dữ liệu vào bảng CHUYENBAY
 GO
 
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('QO 997', 'AMA-NCE', 'Z3SU5Y', '2024/07/21', '4:06', '2:57');
@@ -822,6 +815,8 @@ insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKI
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('ZH 266', 'BBW-AMA', 'Z3SU5Y', '2024/12/27', '14:33', '22:50');
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('UZ 409', 'SAF-AMA', 'Y2MJ8M', '2024/11/12', '23:39', '17:36');
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('JS 595', 'SQZ-NLS', 'ZS3VCX', '2024/06/25', '15:58', '4:32');
+
+-- Them du lieu vao bang HANGVE
 GO
 
 insert into HANGVE (MAHV, TENHANGVE) values ('F', 'First class');
@@ -829,11 +824,13 @@ insert into HANGVE (MAHV, TENHANGVE) values ('J', 'Business');
 insert into HANGVE (MAHV, TENHANGVE) values ('W', 'Premium Economy');
 insert into HANGVE (MAHV, TENHANGVE) values ('Y', 'Economy');
 
+-- Them du lieu vao bang VAITRO
 GO
 
 insert into VAITRO (MAVT, TENVAITRO) values ('NV', 'Employee');
 insert into VAITRO (MAVT, TENVAITRO) values ('KH', 'Customer');
 
+-- Them du lieu vao bang NHANVIEN
 GO
 
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV033311', 'Jewelle Benezeit', '452 Elgar Terrace', '0782856301', '1977/09/17', '2022/05/28', 'F', 'jbenezeit0@youtube.com', 'mX7<L/DsK)2O', '2020/01/15', 'NV');
@@ -1337,6 +1334,8 @@ insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH,
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV057942', 'Cissy Ughetti', '2 Golf Course Drive', '0952993939', '1950/02/15', '1991/10/06', 'F', 'cughettidu@imageshack.us', 'nD5`6z6Pm=', '2020/12/07', 'NV');
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV582109', 'Ola de Tocqueville', '58223 Elka Point', '0449860223', '1972/11/29', '1975/02/04', 'M', 'odedv@blogger.com', 'iK9_qR_!=YN', '1989/06/04', 'NV');
 
+
+-- Them du lieu vao bang KHACHHANG
 GO
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH099823', 'Bree Wanek', 'F', '1985/07/16', '0665563123180', '1989/03/12', 'Zambia', '0545189589', 'bwanek0@hostgator.com', '76206 Rieder Terrace', 'fN8>%_V#7>', '2005/12/19', 'KH');
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH594915', 'Elvira Andryushin', 'M', '2001/05/17', '0121436551690', '1969/07/28', 'Brazil', '0992457682', 'eandryushin1@toplist.cz', '56328 Parkside Drive', 'rO2@"7YCB', '2016/04/18', 'KH');
@@ -1839,4 +1838,20 @@ insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH,
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH668354', 'Bevin Peschke', 'M', '1991/09/15', '0228317092776', '2023/12/14', 'Ukraine', '0551346183', 'bpeschkedu@tuttocitta.it', '54651 Lyons Road', 'gT2+rr"ry#uL6XdM', '2005/06/23', 'KH');
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH149810', 'Michelle Gallear', 'F', '1989/10/17', '0504658724529', '2019/04/06', 'Philippines', '0588638665', 'mgalleardv@over-blog.com', '3 David Place', 'mV3\y`mQJe(O>', '1976/05/09', 'KH');
 
-GO
+
+
+
+
+
+
+
+--TRIGGER THEM SO GHE THUONG + VIP CON LAI KHI THEM CHUYEN BAY
+CREATE TRIGGER TRG_SOGHECONLAI ON CHUYENBAY
+AFTER INSERT AS
+BEGIN
+    UPDATE CHUYENBAY
+    SET SOGHEHANGTHUONGCONLAI = M.SOGHETHUONG, SOGHEHANGVIPCONLAI = M.SOGHEVIP
+    FROM CHUYENBAY C
+    INNER JOIN inserted I ON C.MACB = I.MACB
+    INNER JOIN MAYBAY M ON C.MAMB = M.MAMB
+END

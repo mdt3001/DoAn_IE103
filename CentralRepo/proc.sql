@@ -1,0 +1,133 @@
+use QUANLYCHUYENBAY
+--CÂU 1
+--Hiển thị danh sách khách hàng
+GO
+CREATE PROC PRC_DanhSach_KhachHang
+AS
+BEGIN
+    SELECT * FROM KHACHHANG
+END
+
+EXEC PRC_DanhSach_KhachHang 
+
+--CÂU 2: Hiển thị danh sách nhân viên
+GO
+CREATE PROC PRC_DanhSach_NhanVien
+AS
+BEGIN
+    SELECT * FROM NHANVIEN
+END
+
+EXEC PRC_DanhSach_NhanVien
+
+--CÂU 4: Hiển thị danh sách các hoá đơn do 1 nhân viên đã tạo
+GO
+CREATE PROC PRC_DanhSach_HoaDon_NhanVien_DaTao
+(
+    @MANV CHAR(8)
+)
+AS
+BEGIN 
+    SELECT * FROM HOADON WHERE MANV = @MANV
+END
+
+--CÂU 6: Hiển thị danh sách các chuyến bay theo ngày
+GO 
+CREATE PROC PRC_DanhSach_ChuyenBay_TheoNgay
+(
+    @NGAYKHOIHANH SMALLDATETIME
+)
+AS
+BEGIN
+    SELECT * FROM CHUYENBAY WHERE NGAYKHOIHANH = @NGAYKHOIHANH
+END
+
+SELECT * FROM CHUYENBAY
+EXEC PRC_DanhSach_ChuyenBay_TheoNgay '2025-03-17'
+
+--CÂU 8: Thêm mới một nhân viên, trước khi thêm kiểm tra xem MANV đã tồn tại hay không, và MAVT đã tồn tại trong bảng VAITRO chưa
+GO
+CREATE PROC PRC_ThemMoi_NhanVien
+(
+    @MANV CHAR(8),
+    @TENNV NVARCHAR(50),
+    @DIACHI NCHAR(50),
+    @SDT VARCHAR(10),
+    @NGAYSINH SMALLDATETIME,
+    @NGAYVAOLAM SMALLDATETIME,
+    @GIOITINH NCHAR(3),
+    @EMAIL VARCHAR(50),
+    @PASSWORD VARCHAR(50),
+    @NGAYTAOTK DATETIME,
+    @MAVT CHAR(8)
+)
+AS 
+BEGIN
+    IF EXISTS (SELECT * FROM NHANVIEN WHERE MANV = @MANV)
+    BEGIN
+        PRINT N'MANV đã tồn tại'
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM VAITRO WHERE MAVT = @MAVT)
+    BEGIN
+        PRINT N'MAVT không tồn tại'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO NHANVIEN VALUES(@MANV, @TENNV, @DIACHI, @SDT, @NGAYSINH, @NGAYVAOLAM, @GIOITINH, @EMAIL, @PASSWORD, @NGAYTAOTK, @MAVT)
+    END
+END
+
+SELECT*FROM NHANVIEN
+
+EXEC PRC_ThemMoi_NhanVien 'NV999999', N'Nguyễn Văn A', N'123 ABC', '0123456789', '1999-03-17', '2024-03-17', N'Nam', 'wff@ffb', 'wgjsj','2024-03-17', 'kV'
+
+-- Câu 12: Thêm mới một chuyến bay 
+GO 
+CREATE PROC PRC_ThemMoi_ChuyenBay
+(
+    @MACB CHAR(8),
+    @MATB CHAR(8),
+    @MAMB CHAR (8),
+    @NGAYKHOIHANH DATE,
+    @GIOKHOIHANH TIME,
+    @THOIGIANDUKIEN TIME
+)
+AS
+BEGIN
+    IF EXISTS (SELECT * FROM CHUYENBAY WHERE MACB = @MACB)
+    BEGIN
+        PRINT N'MACB đã tồn tại'
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM TUYENBAY WHERE MATB = @MATB)
+    BEGIN
+        PRINT N'MATB không tồn tại'
+    END
+    ELSE IF NOT EXISTS (SELECT * FROM MAYBAY WHERE MAMB = @MAMB)
+    BEGIN
+        PRINT N'MAMB không tồn tại'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO CHUYENBAY(MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) VALUES(@MACB, @MATB, @MAMB, @NGAYKHOIHANH, @GIOKHOIHANH, @THOIGIANDUKIEN)
+    END
+END
+
+EXEC PRC_ThemMoi_ChuyenBay 'CB999999', 'ABK-BBW', '0GXHYZ', '2025-03-17', '12:00:00', '02:00:00'
+
+--CÂU 14: Tính tổng tiền đã thanh toán thành công của một khách hàng 
+GO
+CREATE PROC PRC_TongTienDaMua 
+(
+    @MAKH CHAR(8),
+    @TONGTIENDATHANHTOAN MONEY OUTPUT
+)
+AS
+BEGIN
+    SELECT @TONGTIENDATHANHTOAN = SUM(THANHTIEN) FROM HOADON WHERE MAKH = @MAKH AND TINHTRANG = 1
+END
+
+GO 
+DECLARE @tongtien MONEY
+EXEC PRC_TongTienDaMua @MAKH='KH002015', @TONGTIENDATHANHTOAN=@tongtien OUTPUT
+PRINT @tongtien
+

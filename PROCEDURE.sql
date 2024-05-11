@@ -93,6 +93,11 @@ BEGIN
         PRINT N'Mã chuyến bay không tồn tại.';
         RETURN;
     END
+    IF NOT EXISTS (SELECT 1 FROM CHUYENBAY WHERE MAHD = @MAHD)
+    BEGIN
+        PRINT N'Mã hóa đơn không tồn tại.';
+        RETURN;
+    END
     INSERT INTO VE (MAVE, MAHV, MACB, MAHD, GIAVE, GHE)
     VALUES (@MAVE, @MAHV, @MACB, @MAHD, @GIAVE, @GHE);
 END

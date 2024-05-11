@@ -1,4 +1,4 @@
---Kiểm tra số ghế thường và số ghế vip còn lại
+--Kiểm tra số ghế thường và số ghế vip còn lại trong chuyến bay 
 CREATE OR ALTER TRIGGER Trg_CheckSeatAvailability
 ON CHUYENBAY
 FOR INSERT

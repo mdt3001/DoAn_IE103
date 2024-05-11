@@ -1,5 +1,4 @@
-
---Kiem tra ve thuong va ve vip
+--Kiểm tra số ghế thường và số ghế vip còn lại
 CREATE OR ALTER TRIGGER Trg_CheckSeatAvailability
 ON CHUYENBAY
 FOR INSERT
@@ -18,7 +17,7 @@ BEGIN
 END;
 
 
---Kiem tra tuoi nhan vien lon hon 18
+--Trigger kiểm tra độ tuổi của nhân viên ( lớn hơn 18 )
 GO
 
 CREATE TRIGGER KiemTraTuoiNhanVien
@@ -34,7 +33,7 @@ BEGIN
 END;
 
 
---Tao matb
+--Trigger tạo mã tuyến bay
 CREATE TRIGGER TRG_AUTO_GENERATE_MATB
 ON TUYENBAY
 INSTEAD OF INSERT
@@ -52,3 +51,68 @@ BEGIN
 END;
 
 insert into TUYENBAY (MASBDI, MASBDEN) VALUES ('TRG', 'TUA');
+
+
+--Trigger tính giờ hạ cánh của chuyến 
+CREATE TRIGGER TRG_GIOHACANH ON CHUYENBAY
+AFTER INSERT AS
+BEGIN
+    UPDATE CHUYENBAY
+    SET GIOHACANH = CAST(DATEADD(MINUTE, DATEDIFF(MINUTE, 0, CAST(I.THOIGIANDUKIEN AS DATETIME)), CAST(C.GIOKHOIHANH AS DATETIME)) AS TIME)
+    FROM CHUYENBAY C
+    INNER JOIN inserted I ON C.MACB = I.MACB;
+END
+
+
+--Trigger thêm số ghế thường và số ghế vip
+CREATE TRIGGER TRG_SOGHECONLAI ON CHUYENBAY
+AFTER INSERT AS
+BEGIN
+    UPDATE CHUYENBAY
+    SET SOGHEHANGTHUONGCONLAI = M.SOGHETHUONG, SOGHEHANGVIPCONLAI = M.SOGHEVIP
+    FROM CHUYENBAY C
+    INNER JOIN inserted I ON C.MACB = I.MACB
+    INNER JOIN MAYBAY M ON C.MAMB = M.MAMB
+END
+GO
+
+    
+-- Trigger kiểm tra tính hợp lệ của ghế
+CREATE TRIGGER TRG_THEMVE ON VE
+INSTEAD OF INSERT AS
+BEGIN
+    DECLARE @tongghevip INT, @tongghethuong INT, @mahv CHAR(8), @ghe CHAR(3), @macb CHAR(8);
+    DECLARE cur CURSOR FOR SELECT MAHV, GHE, MACB FROM inserted;
+	OPEN cur;
+    FETCH NEXT FROM cur INTO @mahv, @ghe, @macb;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SELECT @tongghevip = SOGHEVIP, @tongghethuong = SOGHETHUONG FROM MAYBAY
+        JOIN CHUYENBAY ON MAYBAY.MAMB = CHUYENBAY.MAMB
+        WHERE CHUYENBAY.MACB = @macb;
+        --Kiểm tra tính hợp lý của ghế vip
+        IF @mahv = 'F' AND (SELECT SOGHEHANGVIPCONLAI FROM CHUYENBAY WHERE MACB = @macb) > 0 AND @ghe > 0 AND @ghe <= @tongghevip
+        BEGIN
+            UPDATE CHUYENBAY
+            SET SOGHEHANGVIPCONLAI = SOGHEHANGVIPCONLAI - 1
+            WHERE MACB = @macb;
+            INSERT INTO VE SELECT * FROM inserted WHERE MACB = @macb AND MAHV = @mahv AND GHE = @ghe;
+        END
+        --Kiểm tra tính hợp lệ của ghế thường
+        ELSE IF (@mahv = 'J' OR @mahv = 'W' OR @mahv = 'Y') AND (SELECT SOGHEHANGTHUONGCONLAI FROM CHUYENBAY WHERE MACB = @macb) > 0 AND @ghe > @tongghevip AND @ghe <= (@tongghevip + @tongghethuong)
+        BEGIN
+            UPDATE CHUYENBAY
+            SET SOGHEHANGTHUONGCONLAI = SOGHEHANGTHUONGCONLAI - 1
+            WHERE MACB = @macb;
+            INSERT INTO VE SELECT * FROM inserted WHERE MACB = @macb AND MAHV = @mahv AND GHE = @ghe;
+        END
+        ELSE
+        BEGIN
+            PRINT N'Ghế không hợp lệ.'
+			RETURN;
+        END
+        FETCH NEXT FROM cur INTO @mahv, @ghe, @macb;
+    END
+    CLOSE cur;
+    DEALLOCATE cur;
+END;

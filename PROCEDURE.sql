@@ -1,7 +1,7 @@
 --3) Hiển thị danh sách các chuyến bay
 CREATE PROCEDURE PRC_DanhSach_ChuyenBay AS
 BEGIN
-	SELECT * FROM KHACHHANG
+	SELECT * FROM CHUYENBAY
 END;
 
 GO

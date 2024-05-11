@@ -1,26 +1,7 @@
---Kiểm tra số ghế thường và số ghế vip còn lại trong chuyến bay 
-CREATE OR ALTER TRIGGER Trg_CheckSeatAvailability
-ON CHUYENBAY
-FOR INSERT
-AS
-BEGIN
-    DECLARE @SogheThuong INT, @SogheVip INT;
-    SELECT @SogheThuong = MAYBAY.SOGHETHUONG, @SogheVip = MAYBAY.SOGHEVIP
-    FROM INSERTED
-    INNER JOIN MAYBAY ON INSERTED.MAMB = MAYBAY.MAMB;
-
-    IF EXISTS (SELECT 1 FROM INSERTED WHERE INSERTED.SOGHEHANGTHUONGCONLAI > @SogheThuong OR INSERTED.SOGHEHANGVIPCONLAI > @SogheVip)
-    BEGIN
-        RAISERROR ('Số lượng ghế vượt quá số lượng ghế của máy bay.', 16, 1);
-        ROLLBACK TRANSACTION;
-    END
-END;
-
-
 --Trigger kiểm tra độ tuổi của nhân viên ( lớn hơn 18 )
 GO
 
-CREATE TRIGGER KiemTraTuoiNhanVien
+CREATE TRIGGER TRG_
 ON NHANVIEN
 AFTER INSERT, UPDATE
 AS
@@ -34,7 +15,7 @@ END;
 
 
 --Trigger tạo mã tuyến bay
-CREATE TRIGGER TRG_AUTO_GENERATE_MATB
+CREATE TRIGGER TRG_TUDONGTAO_MATB
 ON TUYENBAY
 INSTEAD OF INSERT
 AS
@@ -117,7 +98,7 @@ END;
 
 
 --Trigger update hóa đơn và tính tổng thành tiền 
-CREATE TRIGGER TRG_UpdateHoaDon ON VE
+CREATE TRIGGER TRG_CAPNHAPHOADON ON VE
 AFTER INSERT AS
 BEGIN
     UPDATE HOADON

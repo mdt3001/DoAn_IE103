@@ -1,7 +1,7 @@
 --Trigger kiểm tra độ tuổi của nhân viên ( lớn hơn 18 )
 GO
 
-CREATE TRIGGER TRG_
+CREATE TRIGGER TRG_KIEMTRATUOI
 ON NHANVIEN
 AFTER INSERT, UPDATE
 AS

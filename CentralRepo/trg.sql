@@ -55,8 +55,7 @@ BEGIN
 END
 GO
 
-    
--- Trigger kiểm tra tính hợp lệ của ghế
+-- trigger kiểm tra tính hợp lệ của ghế
 CREATE TRIGGER TRG_THEMVE ON VE
 INSTEAD OF INSERT AS
 BEGIN
@@ -66,28 +65,39 @@ BEGIN
     FETCH NEXT FROM cur INTO @mahv, @ghe, @macb;
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        SELECT @tongghevip = SOGHEVIP, @tongghethuong = SOGHETHUONG FROM MAYBAY
-        JOIN CHUYENBAY ON MAYBAY.MAMB = CHUYENBAY.MAMB
-        WHERE CHUYENBAY.MACB = @macb;
-        --Kiểm tra tính hợp lý của ghế vip
-        IF @mahv = 'F' AND (SELECT SOGHEHANGVIPCONLAI FROM CHUYENBAY WHERE MACB = @macb) > 0 AND @ghe > 0 AND @ghe <= @tongghevip
+        IF NOT EXISTS
+        (
+            SELECT 1 FROM VE
+            WHERE MACB = @macb AND GHE = @ghe
+        )
         BEGIN
-            UPDATE CHUYENBAY
-            SET SOGHEHANGVIPCONLAI = SOGHEHANGVIPCONLAI - 1
-            WHERE MACB = @macb;
-            INSERT INTO VE SELECT * FROM inserted WHERE MACB = @macb AND MAHV = @mahv AND GHE = @ghe;
-        END
-        --Kiểm tra tính hợp lệ của ghế thường
-        ELSE IF (@mahv = 'J' OR @mahv = 'W' OR @mahv = 'Y') AND (SELECT SOGHEHANGTHUONGCONLAI FROM CHUYENBAY WHERE MACB = @macb) > 0 AND @ghe > @tongghevip AND @ghe <= (@tongghevip + @tongghethuong)
-        BEGIN
-            UPDATE CHUYENBAY
-            SET SOGHEHANGTHUONGCONLAI = SOGHEHANGTHUONGCONLAI - 1
-            WHERE MACB = @macb;
-            INSERT INTO VE SELECT * FROM inserted WHERE MACB = @macb AND MAHV = @mahv AND GHE = @ghe;
+            SELECT @tongghevip = SOGHEVIP, @tongghethuong = SOGHETHUONG FROM MAYBAY
+            JOIN CHUYENBAY ON MAYBAY.MAMB = CHUYENBAY.MAMB
+            WHERE CHUYENBAY.MACB = @macb;
+            IF @mahv = 'F' AND (SELECT SOGHEHANGVIPCONLAI FROM CHUYENBAY WHERE MACB = @macb) > 0 AND @ghe > 0 AND @ghe <= @tongghevip
+            BEGIN
+                UPDATE CHUYENBAY
+                SET SOGHEHANGVIPCONLAI = SOGHEHANGVIPCONLAI - 1
+                WHERE MACB = @macb;
+                INSERT INTO VE SELECT * FROM inserted WHERE MACB = @macb AND MAHV = @mahv AND GHE = @ghe;
+            END
+            ELSE IF (@mahv = 'J' OR @mahv = 'W' OR @mahv = 'Y') AND (SELECT SOGHEHANGTHUONGCONLAI FROM CHUYENBAY WHERE MACB = @macb) > 0 AND @ghe > @tongghevip AND @ghe <= (@tongghevip + @tongghethuong)
+            BEGIN
+                UPDATE CHUYENBAY
+                SET SOGHEHANGTHUONGCONLAI = SOGHEHANGTHUONGCONLAI - 1
+                WHERE MACB = @macb;
+                INSERT INTO VE SELECT * FROM inserted WHERE MACB = @macb AND MAHV = @mahv AND GHE = @ghe;
+            END
+            ELSE
+            BEGIN
+                PRINT N'Ghế không hợp lệ.'
+			    RETURN;
+            END
+            
         END
         ELSE
         BEGIN
-            PRINT N'Ghế không hợp lệ.'
+            PRINT N'Mã số ghế đã được đặt';
 			RETURN;
         END
         FETCH NEXT FROM cur INTO @mahv, @ghe, @macb;

@@ -1,0 +1,71 @@
+--Tạo các role
+CREATE ROLE r_Admin;
+CREATE ROLE r_NhanVien;
+CREATE ROLE r_KhachHang;
+GO
+
+--Cấp quyền quản lý toàn bộ database cho admin
+GRANT CONTROL ON DATABASE::QUANLYCHUYENBAYmoi TO r_Admin;
+GO
+
+GRANT CONTROL ON SCHEMA::dbo TO r_Admin;
+GO
+												-- TẠO LOGIN CHO CÁC ROLE --
+-- Tạo login cho admin
+CREATE LOGIN admin_login WITH PASSWORD = 'yourAdminPassword';
+GO
+
+-- Tạo login cho nhân viên
+CREATE LOGIN nhanvien_login WITH PASSWORD = 'yourNhanVienPassword';
+GO
+
+-- Tạo login cho khách hàng
+CREATE LOGIN khachhang_login WITH PASSWORD = 'yourKhachHangPassword';
+GO
+
+												-- TẠO	USER CHO CÁC ROLE --
+-- Tạo user cho admin
+CREATE USER user_admin FOR LOGIN admin_login;
+GO
+
+-- Tạo user cho nhân viên
+CREATE USER user_nhanvien FOR LOGIN nhanvien_login;
+GO
+
+-- Tạo user cho khách hàng
+CREATE USER user_khachhang FOR LOGIN khachhang_login;
+GO
+
+-- Gán role cho user
+ALTER ROLE r_Admin ADD MEMBER user_admin;
+ALTER ROLE r_NhanVien ADD MEMBER user_nhanvien;
+ALTER ROLE r_KhachHang ADD MEMBER user_khachhang;
+GO
+
+												-- CẤP QUYỀN THAO TÁC TRÊN BẢNG CHO CÁC ROLE --
+--Cấp quyền quản lý các bảng cho nhân viên
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.CHUYENBAY TO r_NhanVien;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.HOADON TO r_NhanVien;
+GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.VE TO r_NhanVien;
+GO
+
+--Cấp quyền xem các bảng cho khách hàng
+GRANT SELECT ON dbo.CHUYENBAY TO r_KhachHang;
+GRANT SELECT ON dbo.VE TO r_KhachHang;
+GO
+
+-- Phân quyền cho PRC_DanhSach_KhachHang
+GRANT EXECUTE ON PRC_DanhSach_KhachHang TO r_NhanVien;
+
+-- Phân quyền cho PRC_DanhSach_NhanVien
+GRANT EXECUTE ON PRC_DanhSach_NhanVien TO r_NhanVien;
+
+-- Phân quyền cho PRC_DanhSach_HoaDon_NhanVien_DaTao
+GRANT EXECUTE ON PRC_DanhSach_HoaDon_NhanVien_DaTao TO r_NhanVien;
+
+-- Phân quyền cho PRC_DanhSach_ChuyenBay_TheoNgay
+GRANT EXECUTE ON PRC_DanhSach_ChuyenBay_TheoNgay TO r_NhanVien;
+GRANT EXECUTE ON PRC_DanhSach_ChuyenBay_TheoNgay TO r_KhachHang;
+
+-- Phân quyền cho PRC_ThemMoi_NhanVien
+GRANT EXECUTE ON PRC_ThemMoi_NhanVien TO r_NhanVien;

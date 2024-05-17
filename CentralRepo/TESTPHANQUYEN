@@ -54,18 +54,27 @@ GRANT SELECT ON dbo.CHUYENBAY TO r_KhachHang;
 GRANT SELECT ON dbo.VE TO r_KhachHang;
 GO
 
--- Phân quyền cho PRC_DanhSach_KhachHang
-GRANT EXECUTE ON PRC_DanhSach_KhachHang TO r_NhanVien;
-
--- Phân quyền cho PRC_DanhSach_NhanVien
+-- Phân quyền thực thi PROC cho role nhân viên 
+GRANT EXECUTE ON PRC_DanhSach_KhachHang TO r_NhanVien
 GRANT EXECUTE ON PRC_DanhSach_NhanVien TO r_NhanVien;
-
--- Phân quyền cho PRC_DanhSach_HoaDon_NhanVien_DaTao
 GRANT EXECUTE ON PRC_DanhSach_HoaDon_NhanVien_DaTao TO r_NhanVien;
-
--- Phân quyền cho PRC_DanhSach_ChuyenBay_TheoNgay
 GRANT EXECUTE ON PRC_DanhSach_ChuyenBay_TheoNgay TO r_NhanVien;
-GRANT EXECUTE ON PRC_DanhSach_ChuyenBay_TheoNgay TO r_KhachHang;
-
--- Phân quyền cho PRC_ThemMoi_NhanVien
+GRANT EXECUTE ON PRC_DanhSach_ChuyenBay TO r_NhanVien;
+GRANT EXECUTE ON PRC_DanhSach_HoaDon_KhachHang_DaThanhToan TO r_NhanVien;
+GRANT EXECUTE ON PRC_DanhSach_Ve_Theo_MACB TO r_NhanVien;
 GRANT EXECUTE ON PRC_ThemMoi_NhanVien TO r_NhanVien;
+GRANT EXECUTE ON PRC_ThemMoi_ChuyenBay TO r_NhanVien;
+GRANT EXECUTE ON PRC_ThemMoi_KhachHang TO r_NhanVien;
+GRANT EXECUTE ON PRC_ThemMoi_Ve TO r_NhanVien;
+GRANT EXECUTE ON PRC_ThemMoi_HoaDon TO r_NhanVien;
+GRANT EXECUTE ON PRC_TongTienDaMua TO r_NhanVien;
+GRANT EXECUTE ON PRC_CapNhat_GiaVe TO r_NhanVien;
+GO
+
+-- Phân quyền thực thi PROC cho role khách hàng 
+GRANT EXECUTE ON PRC_DanhSach_ChuyenBay TO r_KhachHang;
+GRANT EXECUTE ON PRC_DanhSach_HoaDon_KhachHang_DaThanhToan TO r_KhachHang;
+GRANT EXECUTE ON PRC_DanhSach_Ve_Theo_MACB TO r_KhachHang;
+GRANT EXECUTE ON PRC_DanhSach_ChuyenBay_TheoNgay TO r_KhachHang;
+GRANT EXECUTE ON PRC_TongTienDaMua TO r_KhachHang;
+GO 

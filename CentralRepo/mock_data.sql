@@ -58,7 +58,6 @@ insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('BBW-SQZ', 'BBW', 'SQZ');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('GAV-ORN', 'GAV', 'ORN');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('COF-TRG', 'COF', 'TRG');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('PPU-ORN', 'PPU', 'ORN');
-insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('KDP-KDP', 'KDP', 'KDP');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('HGU-CKE', 'HGU', 'CKE');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('MBX-URC', 'MBX', 'URC');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('SAF-WLW', 'SAF', 'WLW');
@@ -99,7 +98,6 @@ insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('FRO-SAF', 'FRO', 'SAF');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('NLS-FRN', 'NLS', 'FRN');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('NKD-FRN', 'NKD', 'FRN');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('SAF-BLD', 'SAF', 'BLD');
-insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('FDE-NCE', 'FDE', 'NCE');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('TUA-OKJ', 'TUA', 'OKJ');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('TAB-BOT', 'TAB', 'BOT');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('ABK-MVK', 'ABK', 'MVK');
@@ -163,8 +161,6 @@ insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('ABK-BKD', 'ABK', 'BKD');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('WLW-URC', 'WLW', 'URC');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('SWV-NLS', 'SWV', 'NLS');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('FRO-PTT', 'FRO', 'PTT');
-insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('FRO-ABK', 'FRO', 'ABK');
-insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('SAF-YWB', 'SAF', 'YWB');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('FCM-SWV', 'FCM', 'SWV');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('FCM-SQO', 'FCM', 'SQO');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('MBX-ABK', 'MBX', 'ABK');
@@ -455,7 +451,6 @@ insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values 
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('Z5O6KQ', 'Wingmaster II', 'AeroTech Industries', 171, 7);
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('UHOB95', 'Falcon III', 'Silverwing Aerospace', 191, 16);
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('HZ2CCY', 'Aerowolf II', 'Skybound Aviation', 191, 9);
-
 GO
 
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('QO 997', 'AMA-NCE', 'Z3SU5Y', '2025/07/21', '4:06', '2:57');
@@ -2178,7 +2173,6 @@ insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('85770297', 'N
 insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('92033882', 'NV077006', 'KH575389', '7/11/2024', 1);
 
 GO
-
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('NGAM0637', 'W', 'VP 100', '30260503', 270, '$4854.54');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('VCNS0117', 'J', 'RS 632', '88707289', 190, '$592.93');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('YGIU9637', 'Y', 'PI 359', '45159474', 190, '$1735.72');
@@ -2190,8 +2184,8 @@ insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('GUTL8360', 'Y', 'KG
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('GDGZ9012', 'W', 'CS 257', '59829567', 94, '$3791.05');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('YMTP9561', 'W', 'UF 966', '46837887', 125, '$1625.00');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('KFII4617', 'W', 'GX 679', '50512777', 7, '$3029.38');
-insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('RSKN6887', 'F', 'PK 064', '45159474', 220, '$2456.53');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('ZWDG6199', 'W', 'CM 255', '58104633', 37, '$3641.29');
+insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('RSKN6887', 'F', 'PK 064', '45159474', 220, '$2456.53');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('LFZS3462', 'Y', 'LV 508', '43698138', 245, '$3516.38');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('IJFO4617', 'J', 'JW 088', '19249690', 252, '$2086.42');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('LBKO6853', 'Y', 'EB 303', '41013275', 14, '$648.59');
@@ -2879,4 +2873,3 @@ insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('BTAW6366', 'J', 'YF
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('DCEP3170', 'J', 'VX 674', '62761266', 72, '$1420.90');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('YPQZ2086', 'F', 'SW 408', '09685222', 273, '$4344.24');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('OHEE7518', 'W', 'QF 607', '51472095', 175, '$2944.92');
-GO

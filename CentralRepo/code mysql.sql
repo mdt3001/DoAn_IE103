@@ -133,6 +133,85 @@ ADD COLUMN SALT VARCHAR(32);
 ALTER TABLE KHACHHANG
 ADD COLUMN SALT VARCHAR(32);
 
+
+-- FUNCTION
+-- Function đếm số lượng khách hàng theo tháng trong năm
+DELIMITER //
+CREATE FUNCTION FUNC_DEM_SLKHDK_THEOTHANG(in_p_month INT, in_p_year INT)
+RETURNS INT
+BEGIN
+    DECLARE v_SLKH INT;
+    SELECT COUNT(*) INTO v_SLKH
+    FROM KHACHHANG
+    WHERE MONTH(NGAYTAOTK) = in_p_month AND YEAR(NGAYTAOTK) = in_p_year;
+    RETURN v_SLKH;
+END;//
+DELIMITER ;
+
+-- Function đếm số lượng chuyến bay theo tháng
+DELIMITER //
+CREATE FUNCTION FUNC_DEM_SLCB_THEOTHANG(in_p_month INT, in_p_year INT)
+RETURNS INT
+BEGIN
+    DECLARE v_SLCB INT;
+    SELECT COUNT(*) INTO v_SLCB
+    FROM CHUYENBAY
+    WHERE MONTH(NGAYKHOIHANH) = in_p_month AND YEAR(NGAYKHOIHANH) = in_p_year;
+    RETURN v_SLCB;
+END;//
+DELIMITER ;
+
+-- Function tính doanh thu theo ngày / tháng / năm
+DELIMITER //
+CREATE FUNCTION FUNC_DOANHTHU(in_p_day INT, in_p_month INT, in_p_year INT)
+RETURNS DECIMAL(10,2)
+BEGIN 
+    DECLARE v_DOANHTHU DECIMAL(10,2);
+    IF (in_p_day IS NOT NULL AND in_p_month IS NULL) OR
+       (in_p_month IS NOT NULL AND in_p_year IS NULL) THEN
+        SET v_DOANHTHU = NULL;
+        RETURN v_DOANHTHU;
+    END IF;
+    
+    IF (in_p_day IS NOT NULL) THEN
+        SELECT COALESCE(SUM(HD.THANHTIEN), 0) INTO v_DOANHTHU
+        FROM HOADON HD
+        WHERE DAY(HD.NGAYLAP) = in_p_day
+            AND MONTH(HD.NGAYLAP) = in_p_month
+            AND YEAR(HD.NGAYLAP) = in_p_year
+            AND TINHTRANG = 1;
+    ELSEIF (in_p_month IS NOT NULL) THEN
+        SELECT COALESCE(SUM(HD.THANHTIEN), 0) INTO v_DOANHTHU
+        FROM HOADON HD
+        WHERE MONTH(HD.NGAYLAP) = in_p_month
+            AND YEAR(HD.NGAYLAP) = in_p_year
+            AND TINHTRANG = 1;
+    ELSEIF (in_p_year IS NOT NULL) THEN
+        SELECT COALESCE(SUM(HD.THANHTIEN), 0) INTO v_DOANHTHU
+        FROM HOADON HD
+        WHERE YEAR(HD.THANHTIEN) = in_p_year
+            AND TINHTRANG = 1;
+    END IF;
+    
+    RETURN v_DOANHTHU;
+END;//
+DELIMITER ;
+
+-- Function tạo salt để hash mật khẩu
+DELIMITER //
+CREATE FUNCTION FUNC_SALT() RETURNS VARCHAR(10)
+BEGIN
+	DECLARE chars VARCHAR(255) DEFAULT 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+	DECLARE salt VARCHAR(255) DEFAULT '';
+	DECLARE i INT DEFAULT 0;
+	WHILE i < 10 DO
+		SET salt = CONCAT(salt, SUBSTRING(chars, FLOOR(1 + RAND() * CHAR_LENGTH(chars)), 1));
+		SET i = i + 1;
+  END WHILE;
+  RETURN salt;
+END;//
+DELIMITER ;
+
 -- TRIGGER
 -- Trigger kiểm tra ngày tạo tài khoản nhân viên
 DELIMITER //
@@ -239,22 +318,8 @@ BEGIN
 END;//
 DELIMITER ;
 
--- Function tạo salt để hash mật khẩu
-DELIMITER //
-CREATE FUNCTION FUNC_SALT() RETURNS VARCHAR(10)
-BEGIN
-	DECLARE chars VARCHAR(255) DEFAULT 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-	DECLARE salt VARCHAR(255) DEFAULT '';
-	DECLARE i INT DEFAULT 0;
-	WHILE i < 10 DO
-		SET salt = CONCAT(salt, SUBSTRING(chars, FLOOR(1 + RAND() * CHAR_LENGTH(chars)), 1));
-		SET i = i + 1;
-  END WHILE;
-  RETURN salt;
-END;//
-DELIMITER ;
 
--- Trigger thêm salt và mã hóa mật khẩu
+-- Trigger thêm salt và mã hóa mật khẩu cho nhân viên
 DELIMITER //
 CREATE TRIGGER TRG_MAHOANHANVIEN
 BEFORE INSERT ON NHANVIEN
@@ -268,6 +333,7 @@ BEGIN
 END;//
 DELIMITER ;
 
+-- Trigger thêm salt và mã hóa mật khẩu cho khách hàng
 DELIMITER //
 CREATE TRIGGER TRG_MAHOAKHACHHANG
 BEFORE INSERT ON KHACHHANG
@@ -282,8 +348,7 @@ END;//
 DELIMITER ;
 
 -- PROCEDURE
--- CÂU 1
--- Hiển thị danh sách khách hàng
+-- Procedure hiển thị danh sách khách hàng
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_KhachHang()
 BEGIN
@@ -291,7 +356,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- CÂU 2: Hiển thị danh sách nhân viên
+-- Procedure hiển thị danh sách nhân viên
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_NhanVien()
 BEGIN
@@ -299,7 +364,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- CÂU 4: Hiển thị danh sách các hoá đơn do 1 nhân viên đã tạo
+-- Procedure hiển thị danh sách các hoá đơn do 1 nhân viên đã tạo
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_HoaDon_NhanVien_DaTao(IN in_MANV CHAR(8))
 BEGIN 
@@ -307,7 +372,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- CÂU 6: Hiển thị danh sách các chuyến bay theo ngày
+-- Procedure hiển thị danh sách các chuyến bay theo ngày
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_ChuyenBay_TheoNgay(IN in_NGAYKHOIHANH DATE)
 BEGIN
@@ -315,7 +380,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- CÂU 8: Thêm mới một nhân viên, trước khi thêm kiểm tra xem MANV đã tồn tại hay không, và MAVT đã tồn tại trong bảng VAITRO chưa
+-- Procedure thêm mới một nhân viên, trước khi thêm kiểm tra xem MANV đã tồn tại hay không, và MAVT đã tồn tại trong bảng VAITRO chưa
 DELIMITER //
 CREATE PROCEDURE PRC_ThemMoi_NhanVien(IN in_MANV CHAR(8), IN in_TENNV VARCHAR(50), IN in_DIACHI CHAR(50), IN in_SODT VARCHAR(10), IN in_NGAYSINH DATE, IN in_NGAYVAOLAM DATE, IN in_GIOITINH CHAR(3), IN in_EMAIL VARCHAR(50), IN in_PASSWORD VARCHAR(50), IN in_NGAYTAOTK DATETIME, IN in_MAVT CHAR(8))
 BEGIN
@@ -329,7 +394,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- Câu 12: Thêm mới một chuyến bay 
+-- Procedure thêm mới một chuyến bay 
 DELIMITER //
 CREATE PROCEDURE PRC_ThemMoi_ChuyenBay(IN in_MACB CHAR(8), IN in_MATB CHAR(8), IN in_MAMB CHAR(8), IN in_NGAYKHOIHANH DATE, IN in_GIOKHOIHANH TIME, IN in_THOIGIANDUKIEN TIME)
 BEGIN
@@ -344,7 +409,8 @@ BEGIN
     END IF;
 END;//
 DELIMITER ;
--- CÂU 14: Tính tổng tiền đã thanh toán thành công của một khách hàng 
+
+-- Procedure tính tổng tiền đã thanh toán thành công của một khách hàng 
 DELIMITER //
 CREATE PROCEDURE PRC_TongTienDaMua(IN in_MAKH CHAR(8), OUT TONGTIENDATHANHTOAN DECIMAL(10,2))
 BEGIN
@@ -352,7 +418,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 3) Hiển thị danh sách các chuyến bay
+-- Procedure hiển thị danh sách các chuyến bay
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_ChuyenBay()
 BEGIN
@@ -360,7 +426,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 5) Hiển thị danh sách các hoá đơn đã thanh toán của 1 khách hàng
+-- Procedure hiển thị danh sách các hoá đơn đã thanh toán của 1 khách hàng
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_HoaDon_KhachHang_DaThanhToan(IN in_MAKH CHAR(8))
 BEGIN
@@ -369,7 +435,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 7) Hiển thị danh sách các vé theo mã chuyến bay
+-- Procedure hiển thị danh sách các vé theo mã chuyến bay
 DELIMITER //
 CREATE PROCEDURE PRC_DanhSach_Ve_Theo_MACB(IN in_MACB CHAR(8))
 BEGIN
@@ -378,7 +444,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 9) Thêm mới một khách hàng, trước khi thêm kiểm tra xem MAKH đã tồn tại hay không, và MAVT đã tồn tại trong bảng VAITRO chưa
+-- Procedure thêm mới một khách hàng, trước khi thêm kiểm tra xem MAKH đã tồn tại hay không, và MAVT đã tồn tại trong bảng VAITRO chưa
 DELIMITER //
 CREATE PROCEDURE PRC_ThemMoi_KhachHang(IN in_MAKH CHAR(8), IN in_TENKH NVARCHAR(50), IN in_GIOITINH NVARCHAR(3), IN in_NGAYSINH DATE, IN in_CCCD CHAR(12), IN in_NGAYCAP DATE, IN in_QUOCTICH NVARCHAR(50), IN in_SODT CHAR(10), IN in_EMAIL NVARCHAR(50), IN in_DIACHI NVARCHAR(100), IN in_PASSWORD NVARCHAR(50), IN in_NGAYTAOTK DATE, IN in_MAVT CHAR(8))
 BEGIN
@@ -393,7 +459,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 10) Thêm mới một vé cho chuyến bay có sẵn
+-- Procedure thêm mới một vé cho chuyến bay có sẵn
 DELIMITER //
 CREATE PROCEDURE PRC_ThemMoi_Ve(IN in_MAVE CHAR(8), IN in_MAHV CHAR(8), IN in_MACB CHAR(8), IN in_MAHD CHAR(8), IN in_GIAVE INT, IN in_GHE CHAR(3))
 BEGIN
@@ -412,7 +478,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 11) Thêm mới một hoá đơn 
+-- Procedure thêm mới một hoá đơn 
 DELIMITER //
 CREATE PROCEDURE PRC_ThemMoi_HoaDon(IN in_MAHD CHAR(8), IN in_MANV CHAR(8), IN in_MAKH CHAR(8), IN in_MAVE CHAR(8), IN in_TINHTRANG INT)
 BEGIN
@@ -434,7 +500,7 @@ BEGIN
 END;//
 DELIMITER ;
 
--- 13) Cập nhật lại giá vé
+-- Procedure cập nhật lại giá vé
 DELIMITER //
 CREATE PROCEDURE PRC_CapNhat_GiaVe(IN in_MAVE CHAR(8), IN in_GIAVE INT)
 BEGIN
@@ -485,69 +551,8 @@ BEGIN
 END;//
 DELIMITER ;
 
--- FUNCTION
--- Function đếm số lượng khách hàng theo tháng trong năm
-DELIMITER //
-CREATE FUNCTION FUNC_DEM_SLKHDK_THEOTHANG(in_p_month INT, in_p_year INT)
-RETURNS INT
-BEGIN
-    DECLARE v_SLKH INT;
-    SELECT COUNT(*) INTO v_SLKH
-    FROM KHACHHANG
-    WHERE MONTH(NGAYTAOTK) = in_p_month AND YEAR(NGAYTAOTK) = in_p_year;
-    RETURN v_SLKH;
-END;//
-DELIMITER ;
-
--- Function đếm số lượng chuyến bay theo tháng
-DELIMITER //
-CREATE FUNCTION FUNC_DEM_SLCB_THEOTHANG(in_p_month INT, in_p_year INT)
-RETURNS INT
-BEGIN
-    DECLARE v_SLCB INT;
-    SELECT COUNT(*) INTO v_SLCB
-    FROM CHUYENBAY
-    WHERE MONTH(NGAYKHOIHANH) = in_p_month AND YEAR(NGAYKHOIHANH) = in_p_year;
-    RETURN v_SLCB;
-END;//
-DELIMITER ;
-
--- Function tính doanh thu theo ngày / tháng / năm
-DELIMITER //
-CREATE FUNCTION FUNC_DOANHTHU(in_p_day INT, in_p_month INT, in_p_year INT)
-RETURNS DECIMAL(10,2)
-BEGIN 
-    DECLARE v_DOANHTHU DECIMAL(10,2);
-    IF (in_p_day IS NOT NULL AND in_p_month IS NULL) OR
-       (in_p_month IS NOT NULL AND in_p_year IS NULL) THEN
-        SET v_DOANHTHU = NULL;
-        RETURN v_DOANHTHU;
-    END IF;
-    
-    IF (in_p_day IS NOT NULL) THEN
-        SELECT COALESCE(SUM(HD.THANHTIEN), 0) INTO v_DOANHTHU
-        FROM HOADON HD
-        WHERE DAY(HD.NGAYLAP) = in_p_day
-            AND MONTH(HD.NGAYLAP) = in_p_month
-            AND YEAR(HD.NGAYLAP) = in_p_year
-            AND TINHTRANG = 1;
-    ELSEIF (in_p_month IS NOT NULL) THEN
-        SELECT COALESCE(SUM(HD.THANHTIEN), 0) INTO v_DOANHTHU
-        FROM HOADON HD
-        WHERE MONTH(HD.NGAYLAP) = in_p_month
-            AND YEAR(HD.NGAYLAP) = in_p_year
-            AND TINHTRANG = 1;
-    ELSEIF (in_p_year IS NOT NULL) THEN
-        SELECT COALESCE(SUM(HD.THANHTIEN), 0) INTO v_DOANHTHU
-        FROM HOADON HD
-        WHERE YEAR(HD.THANHTIEN) = in_p_year
-            AND TINHTRANG = 1;
-    END IF;
-    
-    RETURN v_DOANHTHU;
-END;//
-DELIMITER ;
-
+-- THÊM DỮ LIỆU
+-- Thêm dữ liệu cho bảng SANBAY
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('FCM', 'Flying Cloud Airport', 'Minneapolis');
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('COF', 'Patrick Air Force Base', 'Cocoa Beach');
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('GAV', 'Gag Island Airport', 'Gag Island');
@@ -599,8 +604,7 @@ insert into SANBAY (MASB, TENSB, DIADIEM) values ('MGD', 'Magdalena Airport', 'M
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('SKQ', 'Sekakes Airport', 'Sekakes');
 insert into SANBAY (MASB, TENSB, DIADIEM) values ('MBX', 'Maribor Airport', 'Maribor');
 
-
-
+-- Thêm dữ liệu cho bảng TUYENBAY
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('BBW-SUT', 'BBW', 'SUT');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('NLS-BOT', 'NLS', 'BOT');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('BBW-SQZ', 'BBW', 'SQZ');
@@ -786,6 +790,7 @@ insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('PPU-FRN', 'PPU', 'FRN');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('MGR-TUA', 'MGR', 'TUA');
 insert into TUYENBAY (MATB, MASBDI, MASBDEN) values ('MBX-SUT', 'MBX', 'SUT');
 
+-- Thêm dữ liệu cho bảng MAYBAY
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('LPRHRT', 'Aerofox II', 'Firefly Jets', 121, 7);
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('39KBN4', 'Firestorm', 'Firefly Jets', 114, 9);
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('ZS3VCX', 'Starjet', 'Sunrise Aviation', 142, 4);
@@ -987,6 +992,7 @@ insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values 
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('UHOB95', 'Falcon III', 'Silverwing Aerospace', 191, 16);
 insert into MAYBAY (MAMB, TENMAYBAY, HANGSANXUAT, SOGHETHUONG, SOGHEVIP) values ('HZ2CCY', 'Aerowolf II', 'Skybound Aviation', 191, 9);
 
+-- Thêm dữ liệu cho bảng CHUYENBAY
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('AE 660  ', 'NCE-FRN ', 'XZPZGJ  ', '2025-05-25', '18:28:00', '22:27:00');
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('AG 553  ', 'BBW-AMA ', 'YL3LHE  ', '2025-06-19', '10:03:00', '10:24:00');
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('AN 989  ', 'MBX-WLW ', 'XRSEF9  ', '2025-05-29', '10:22:00', '19:20:00');
@@ -1110,14 +1116,17 @@ insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKI
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('ZO 430  ', 'FRO-COF ', 'ZS3VCX  ', '2025-11-21', '16:46:00', '02:47:00');
 insert into CHUYENBAY (MACB, MATB, MAMB, NGAYKHOIHANH, GIOKHOIHANH, THOIGIANDUKIEN) values ('ZP 863  ', 'SAF-TDA ', 'XI1JDN  ', '2025-11-04', '03:38:00', '21:08:00');
 
+-- Thêm dữ liệu cho bảng HANGVE
 insert into HANGVE (MAHV, TENHANGVE) values ('F', 'First class');
 insert into HANGVE (MAHV, TENHANGVE) values ('J', 'Business');
 insert into HANGVE (MAHV, TENHANGVE) values ('W', 'Premium Economy');
 insert into HANGVE (MAHV, TENHANGVE) values ('Y', 'Economy');
 
+-- Thêm dữ liệu cho bảng VAITRO
 insert into VAITRO (MAVT, TENVAITRO) values ('NV', 'Employee');
 insert into VAITRO (MAVT, TENVAITRO) values ('KH', 'Customer');
 
+-- Thêm dữ liệu cho bảng NHANVIEN
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV010574', 'Raf Westoll', '16 Anthes Avenue', '0641489143', '1947-10-13', '1964-07-28', 'F', 'rwestoll8y@vkontakte.ru', 'uZ5\9{S9}h!', '1975-07-15', 'NV');
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV012052', 'Ondrea Pigne', '16 Porter Plaza', '0511790839', '1971-03-05', '1986-05-15', 'F', 'opignec3@timesonline.co.uk', 'wS6{zP#_/nZy&', '1999-12-24', 'NV');
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV019077', 'Ford Dewey', '3 Straubel Park', '0616334311', '1994-12-12', '1996-08-25', 'M  ', 'fdewey7a@printfriendly.com', 'lD9,0_S3', '2012-10-28', 'NV');
@@ -1284,6 +1293,7 @@ insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH,
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV979641', 'Manon Layfield', '30 Bobwhite Hill', '0490165757', '1967-06-21', '1986-04-20', 'M  ', 'mlayfield90@ifeng.com', 'bM9#HS)5m', '1992-01-01', 'NV');
 insert into NHANVIEN (MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, PASSWORD, NGAYTAOTK, MAVT) values ('NV992229', 'Shawn Bridson', '9670 Logan Place', '0637884935', '1960-05-24', '1985-11-01', 'M  ', 'sbridsondf@intel.com', 'qM9#lnW|X/!8', '2009-11-30', 'NV');
 
+-- Thêm dữ liệu cho bảng KHACHHANG
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH002015', 'Jacenta McCullouch', 'M', '1981-11-17', '0828467463889', '2010-07-29', 'Philippines', '0076041706', 'jmccullouchcs@upenn.edu', '29827 Hansons Pass', 'hO0"~4t!P)', '1983-12-09', 'KH');
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH004422', 'Jemie Prater', 'M', '1998-04-16', '0683055717214', '2020-05-29', 'Japan', '0177932075', 'jpraterbo@google.co.uk', '014 Crest Line Center', 'lP6&\<VdQM', '1980-10-28', 'KH');
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH006633', 'Rafaela Giacomelli', 'F', '1966-10-07', '0765687734381', '2014-04-22', 'China', '0500496075', 'rgiacomellic2@kickstarter.com', '810 Forest Dale Junction', 'cO0&8(RGOOQH8kh`', '1981-10-22', 'KH');
@@ -1672,6 +1682,7 @@ insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH,
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH993336', 'Karita Narducci', 'F', '1988-06-10', '0880534107117', '1991-07-05', 'Estonia', '0112990130', 'knarducci4j@prlog.org', '06 Declaration Court', 'wV8&xf.@/k?8ZR{', '1970-09-12', 'KH');
 insert into KHACHHANG (MAKH, TENKH, GIOITINH, NGAYSINH, CCCD, NGAYCAP, QUOCTICH, SODT, EMAIL, DIACHI, PASSWORD, NGAYTAOTK, MAVT) values ('KH995610', 'Kirsteni Spiby', 'F', '1967-06-12', '0925673149037', '1973-03-20', 'China', '0349044034', 'kspiby65@yahoo.com', '97122 Loeprich Circle', 'iQ2#sWWz0$1v1k', '1965-11-23', 'KH');
 
+-- Thêm dữ liệu cho bảng HOADON
 insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('00000001', 'NV078538', 'KH496697', '2024-05-17', '0');
 insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('00130557', 'NV078538', 'KH370303', '2023-06-14', '1');
 insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('00140987', 'NV430597', 'KH004422', '2024-02-18', '0');
@@ -2174,6 +2185,7 @@ insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('99619728', 'N
 insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('99675600', 'NV281921', 'KH094387', '2024-06-13', '1');
 insert into HOADON (MAHD, MANV, MAKH, NGAYLAP, TINHTRANG) values ('99715059', 'NV660217', 'KH121401', '2023-03-23', '0');
 
+-- Thêm dữ liệu cho bảng VE
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('AFII2076', 'W', 'XK 113  ', '61914355', '58', '1712.38');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('APPT0275', 'J', 'UD 378  ', '20161572', '49', '313.12');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('ARAX0794', 'J', 'KB 938  ', '69100259', '50', '3724.91');
@@ -2390,6 +2402,7 @@ insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('ZQAC5978', 'W', 'QF
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('ZVRQ7945', 'W', 'QZ 396  ', '46458379', '20', '3188.92');
 insert into VE (MAVE, MAHV, MACB, MAHD, GHE, GIAVE) values ('ZWDG6199', 'W', 'CM 255  ', '58104633', '37', '3641.29');
 
+-- PHÂN QUYỀN (ROLE & USER)
 -- Tạo role
 CREATE ROLE 'admin_role';
 CREATE ROLE 'nhanvien_role';
@@ -2407,7 +2420,6 @@ GRANT 'khachhang_role' TO 'khachhang_user'@'%';
 
 -- Cấp quyền quản lý toàn bộ database cho admin
 GRANT ALL PRIVILEGES ON QUANLYCHUYENBAY.* TO 'admin_role';
-
 
 -- Cấp quyền thao tác trên bảng cho nhân viên
 GRANT SELECT, INSERT, UPDATE, DELETE ON QUANLYCHUYENBAY.CHUYENBAY TO 'nhanvien_role';
@@ -2456,5 +2468,48 @@ GRANT EXECUTE ON PROCEDURE QUANLYCHUYENBAY.PRC_TongTienDaMua TO 'khachhang_role'
 GRANT EXECUTE ON PROCEDURE QUANLYCHUYENBAY.PRC_DanhSach_KhachHang TO 'khachhang_role';
 GRANT EXECUTE ON PROCEDURE QUANLYCHUYENBAY.PRC_TIM_CHUYENBAY TO 'khachhang_role';
 
--- Apply changes
 FLUSH PRIVILEGES;
+
+-- VIEW
+-- View để ẩn mật khẩu cho nhân viên
+CREATE VIEW NHANVIEN_VIEW AS
+SELECT MANV, TENNV, DIACHI, SODT, NGAYSINH, NGAYVAOLAM, GIOITINH, EMAIL, NGAYTAOTK
+FROM NHANVIEN;
+
+REVOKE SELECT ON QUANLYCHUYENBAY.NHANVIEN FROM nhanvien_role;
+GRANT SELECT ON QUANLYCHUYENBAY.NHANVIEN_VIEW TO nhanvien_role;
+
+-- View để ẩn mật khẩu cho khách hàng 
+CREATE VIEW KHACHHANG_VIEW AS
+SELECT MAKH, TENKH, GIOITINH, NGAYSINH, QUOCTICH, SODT, EMAIL, DIACHI, NGAYTAOTK
+FROM KHACHHANG;
+
+REVOKE SELECT ON QUANLYCHUYENBAY.KHACHHANG FROM nhanvien_role;
+GRANT SELECT ON QUANLYCHUYENBAY.KHACHHANG_VIEW TO nhanvien_role;
+
+-- View để xem chi tiết chuyến bay
+CREATE VIEW THONGTIN_CHUYENBAY_VIEW AS
+SELECT CB.MACB, NGAYKHOIHANH, GIOKHOIHANH, GIOHACANH, GIAVE, TENHANGVE
+FROM CHUYENBAY CB JOIN VE ON CB.MACB = VE.MACB 
+	JOIN HANGVE HV ON VE.MAHV = HV.MAHV
+ORDER BY CB.MACB;
+	
+-- View để xem tổng tiền mua hàng của khách hàng
+CREATE VIEW TONGTIEN_KHACHHANG_VIEW AS
+SELECT KH.MAKH, TENKH, COALESCE(SUM(HD.THANHTIEN),0) AS TONGTIEN
+FROM KHACHHANG KH LEFT JOIN HOADON HD ON KH.MAKH = HD.MAKH
+WHERE TINHTRANG = 1 
+GROUP BY KH.MAKH
+ORDER BY KH.MAKH;
+
+-- View để xem hóa đơn chưa thanh toán
+CREATE VIEW HOADON_CHUATHANHTOAN AS
+SELECT MAHD, MANV, MAKH, NGAYLAP
+FROM HOADON
+WHERE TINHTRANG = 0;
+
+-- View để xem hóa đơn đã thanh toán
+CREATE VIEW HOADON_DATHANHTOAN AS
+SELECT MAHD, MANV, MAKH, NGAYLAP
+FROM HOADON 
+WHERE TINHTRANG = 1;

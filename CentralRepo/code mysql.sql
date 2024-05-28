@@ -1120,6 +1120,7 @@ insert into CLASS (CLASS_ID, CLASS_NAME) values ('W', 'Premium Economy');
 insert into CLASS (CLASS_ID, CLASS_NAME) values ('Y', 'Economy');
 
 -- Thêm dữ liệu cho bảng ROLE
+insert into ROLE (ROLE_ID, ROLE_NAME) values ('AD', 'Administrator');
 insert into ROLE (ROLE_ID, ROLE_NAME) values ('NV', 'Employee');
 insert into ROLE (ROLE_ID, ROLE_NAME) values ('KH', 'Customer');
 
